@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  mysql:
+    image: mysql
+    container_name: mysql
+    volumes:
+      - mysql:/var/lib/mysql
+    env_file:
+      - "./${MYSQL_ENV_FILE}"
+    networks:
+      - db
+
+  web:
+    build:
+      context: .
+      args:
+        - FLASK_CONFIG_FILE
+        - BRANCH
+    container_name: web
+    restart: always
+    volumes:
+      - migrations:/var/web-app
+    env_file:
+      - "./${MYSQL_ENV_FILE}"
+    networks:
+      - proxy
+      - db
+    depends_on:
+      - mysql
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+    networks:
+      - proxy
+    depends_on:
+      - web
+
+networks:
+  proxy:
+  db:
+
+volumes:
+  migrations:
+  mysql:
